@@ -56,20 +56,62 @@ Adapters must be treated as replaceable access layers.
 
 The system must remain understandable and testable even if an adapter is removed.
 
-## 4. Mandatory rules for adapters
+## 4. Non-extraction rule
+
+Core logic must not be pulled, copied, duplicated, or reimplemented inside adapter layers.
+
+Adapters must not contain their own versions of:
+
+- gate logic;
+- audit classification logic;
+- official outcome rules;
+- artifact eligibility rules;
+- blocked-document promotion rules;
+- decision-readiness rules;
+- compliance or prescriptive filtering logic.
+
+Adapters may only call documented core entry points.
+
+If an adapter needs behavior that does not yet exist, the correct path is:
+
+```text
+request documented core contract
+↓
+review governance impact
+↓
+add or expose minimal core entry point
+↓
+adapter calls that entry point
+```
+
+The incorrect path is:
+
+```text
+copy core logic into API/MCP/CLI
+↓
+modify it locally
+↓
+produce unofficial decision behavior
+```
+
+This rule exists to prevent divergent governance behavior between the official pipeline and external access layers.
+
+## 5. Mandatory rules for adapters
 
 Adapters must follow these rules:
 
 1. Do not modify core logic unless the change is explicitly classified as a core correction.
-2. Do not introduce external AI calls into the official core pipeline without a separate governance review.
-3. Do not change official audit outcomes.
-4. Do not promote blocked or diagnostic material into official output without human review.
-5. Do not bypass compliance, prescriptive, or traceability gates.
-6. Do not write examples, curl commands, or integration snippets inside executable Python modules unless they are valid comments or tests.
-7. Do not create new runtime contracts without documenting them.
-8. Do not allow MCP, API, CLI, or web layers to become the source of truth for governance rules.
+2. Do not copy, fork, or duplicate core logic into adapter code.
+3. Do not introduce external AI calls into the official core pipeline without a separate governance review.
+4. Do not change official audit outcomes.
+5. Do not promote blocked or diagnostic material into official output without human review.
+6. Do not bypass compliance, prescriptive, or traceability gates.
+7. Do not write examples, curl commands, or integration snippets inside executable Python modules unless they are valid comments or tests.
+8. Do not create new runtime contracts without documenting them.
+9. Do not allow MCP, API, CLI, or web layers to become the source of truth for governance rules.
+10. Do not make adapter convenience more important than auditability.
 
-## 5. Contract discipline
+## 6. Contract discipline
 
 Any adapter that calls a core function or script must respect an explicit contract.
 
@@ -98,7 +140,7 @@ Either update the target script contract minimally or remove the unsupported ada
 Do not refactor unrelated layers.
 ```
 
-## 6. MCP boundary
+## 7. MCP boundary
 
 MCP is an adapter layer.
 
@@ -116,12 +158,14 @@ MCP integrations must:
 MCP must not:
 
 - silently rewrite core logic;
+- pull core logic into MCP tool handlers;
+- duplicate official gate behavior;
 - inject third-party model decisions into official audit output;
 - bypass gates;
 - create undocumented execution paths;
 - mix demo commands with production code.
 
-## 7. Pull request policy
+## 8. Pull request policy
 
 Changes must be separated by layer.
 
@@ -134,7 +178,9 @@ Recommended PR categories:
 
 A PR should not mix core logic changes with MCP/API/UI/deployment changes unless there is an explicit reason.
 
-## 8. Minimal correction policy
+Any PR that moves logic from `tcria/` into API, MCP, CLI, web, or deployment code must be treated as a governance-risk PR and reviewed before merge.
+
+## 9. Minimal correction policy
 
 When fixing defects:
 
@@ -145,7 +191,7 @@ When fixing defects:
 5. Run the narrowest relevant validation.
 6. Document the evidence in the PR.
 
-## 9. Human governance
+## 10. Human governance
 
 TCRIA does not replace the responsible human decision-maker.
 
