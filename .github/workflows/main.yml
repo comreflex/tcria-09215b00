@@ -37,3 +37,10 @@ jobs:
       - name: Build Docker image (MCP)
         run: |
           docker build -f Dockerfile.mcp -t tcria:mcp-ci .
+
+      - name: Smoke API container
+        run: |
+          docker run -d --rm -p 8000:8000 --name tcria_api_ci tcria:mcp-ci
+          sleep 5
+          curl -fsS http://127.0.0.1:8000/health
+          docker stop tcria_api_ci

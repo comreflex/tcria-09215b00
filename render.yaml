@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: tcria-api
+    env: docker
+    dockerfilePath: ./Dockerfile.mcp
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
