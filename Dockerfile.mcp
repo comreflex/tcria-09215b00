@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Copy packaging metadata first for better layer caching.
+COPY pyproject.toml requirements.txt README.md ./
+COPY tcria ./tcria
+COPY run_governance_pipeline.py ./
+COPY generate_blocked_artifacts_review.py ./
+COPY generate_case_preparation_summary.py ./
+COPY generate_case_timeline.py ./
+COPY generate_unified_governance_report_pdf.py ./
+COPY generate_investigation_report.py ./
+
+RUN pip install --upgrade pip && pip install -e .
+
+# Default command for smoke/startup validation.
+CMD ["tcria", "--help"]
