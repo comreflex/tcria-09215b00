@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 
 from tcria.engine import TCRIAEngine
@@ -17,6 +18,16 @@ def create_uploads_router(
     max_upload_mb: int,
 ) -> APIRouter:
     router = APIRouter()
+    api_token = os.getenv("TCRIA_API_TOKEN", "").strip()
+
+    def _require_token(authorization: str | None) -> None:
+        if not api_token:
+            raise HTTPException(status_code=503, detail="TCRIA_API_TOKEN is not configured.")
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing Bearer token.")
+        supplied = authorization.split(" ", 1)[1].strip()
+        if supplied != api_token:
+            raise HTTPException(status_code=401, detail="Invalid token.")
 
     @router.get("/ui/upload", response_class=HTMLResponse)
     def upload_ui() -> str:
@@ -44,6 +55,7 @@ def create_uploads_router(
       <p>Selecione um arquivo para auditoria. O armazenamento é temporário e será apagado automaticamente.</p>
       <label class="plus" for="f">+</label>
       <input id="f" type="file" />
+      <input id="token" type="password" placeholder="Bearer token" style="width:100%;max-width:360px;margin:8px 0;padding:8px;border:1px solid #cbd5e1;border-radius:8px;" />
       <div><button id="send">Escanear Arquivo</button></div>
       <p id="status"></p>
       <pre id="out">{}</pre>
@@ -53,6 +65,7 @@ def create_uploads_router(
       const send = document.getElementById('send');
       const out = document.getElementById('out');
       const status = document.getElementById('status');
+      const token = document.getElementById('token');
       send.onclick = async () => {
         if (!fileInput.files || fileInput.files.length === 0) {
           status.textContent = 'Selecione um arquivo antes de escanear.';
@@ -62,7 +75,8 @@ def create_uploads_router(
         const fd = new FormData();
         fd.append('file', fileInput.files[0]);
         fd.append('strict', 'true');
-        const res = await fetch('/uploads/scan', { method: 'POST', body: fd });
+        const t = token.value || '';
+        const res = await fetch('/uploads/scan', { method: 'POST', body: fd, headers: { Authorization: `Bearer ${t}` } });
         const data = await res.json();
         status.textContent = res.ok ? 'Concluído.' : 'Falha.';
         out.textContent = JSON.stringify(data, null, 2);
@@ -91,7 +105,9 @@ def create_uploads_router(
     def upload_and_scan(
         file: UploadFile = File(...),
         strict: bool = Form(True),
+        authorization: str | None = Header(default=None),
     ) -> dict[str, object]:
+        _require_token(authorization)
         scan_store.purge_expired()
         original_name = Path(file.filename or "upload.bin").name
         scan = scan_store.create_scan(original_name)
@@ -131,7 +147,8 @@ def create_uploads_router(
             raise HTTPException(status_code=400, detail=f"Falha ao processar upload: {exc}") from exc
 
     @router.get("/uploads/{scan_id}")
-    def get_upload_status(scan_id: str) -> dict[str, object]:
+    def get_upload_status(scan_id: str, authorization: str | None = Header(default=None)) -> dict[str, object]:
+        _require_token(authorization)
         scan_store.purge_expired()
         record = scan_store.get_scan(scan_id)
         if record is None:
@@ -139,7 +156,8 @@ def create_uploads_router(
         return record.to_dict()
 
     @router.post("/uploads/purge")
-    def purge_expired_uploads() -> dict[str, object]:
+    def purge_expired_uploads(authorization: str | None = Header(default=None)) -> dict[str, object]:
+        _require_token(authorization)
         purged = scan_store.purge_expired()
         return {
             "purged": purged,
