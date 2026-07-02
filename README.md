@@ -183,6 +183,15 @@ Main endpoints:
 
 ---
 
+## Uso com ChatGPT GPTs
+
+Este repositório já pode ser integrado a um GPT customizado via **Actions** usando a API FastAPI (`/openapi.json`).
+
+- guia rápido de preparação e publicação: `docs/chatgpt-gpts-setup.md`
+- schema OpenAPI para importação no GPT: `https://SEU_DOMINIO/openapi.json`
+
+---
+
 ## Architecture note
 
 The architecture overview in `docs/architecture-overview.md` is kept as the project's current high-level representation. Operational implementation remains package- and script-oriented, and the repository structure is organized to support that working style cleanly.
