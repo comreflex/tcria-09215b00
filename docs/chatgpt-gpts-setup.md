@@ -25,7 +25,7 @@ Endpoints úteis:
 Com a API rodando, valide:
 
 - `http://localhost:8000/openapi.json` (local)
-- `https://SEU_DOMINIO/openapi.json` (produção)
+- `https://<YOUR_DOMAIN>/openapi.json` (produção)
 
 Este arquivo é o que será importado em **GPT Builder > Actions > Import from URL**.
 
@@ -44,7 +44,7 @@ No GPT Builder:
 
 1. Abra **Actions**.
 2. Clique em **Import from URL**.
-3. Informe `https://SEU_DOMINIO/openapi.json`.
+3. Informe `https://<YOUR_DOMAIN>/openapi.json`.
 4. Revise os endpoints habilitados.
 5. Defina instruções do GPT limitando o uso a auditoria e organização documental.
 
@@ -54,4 +54,3 @@ No GPT Builder:
 - Restringir escopo de diretórios com `TCRIA_ALLOWED_INPUT_ROOTS`.
 - Evitar habilitar endpoints não necessários ao caso de uso.
 - Testar com payloads pequenos antes de execução em lote.
-

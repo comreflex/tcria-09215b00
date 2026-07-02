@@ -188,7 +188,7 @@ Main endpoints:
 Este repositório já pode ser integrado a um GPT customizado via **Actions** usando a API FastAPI (`/openapi.json`).
 
 - guia rápido de preparação e publicação: `docs/chatgpt-gpts-setup.md`
-- schema OpenAPI para importação no GPT: `https://SEU_DOMINIO/openapi.json`
+- schema OpenAPI para importação no GPT: `https://<YOUR_DOMAIN>/openapi.json`
 
 ---
 
