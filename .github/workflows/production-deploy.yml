@@ -1,0 +1,17 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Deploy to Production
+        run: |
+          echo "Workflow manual preservado."
+          echo "Se houver um deploy real, ele deve ser implementado aqui antes do uso."

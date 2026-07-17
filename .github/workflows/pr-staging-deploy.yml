@@ -1,0 +1,17 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy_pr_to_staging:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Deploy to Staging
+        run: |
+          echo "Workflow manual preservado."
+          echo "Se houver um deploy de staging real, ele deve ser implementado aqui antes do uso."
