@@ -1,0 +1,15 @@
+name: Legacy CI Sample
+
+on:
+  workflow_dispatch:
+
+jobs:
+  archived:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Archived workflow notice
+        run: echo Hello, world!
+      - name: Guidance
+        run: |
+          echo "This legacy sample workflow is manual-only."
+          echo "Use .github/workflows/main.yml for the canonical CI pipeline."

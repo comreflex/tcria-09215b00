@@ -1,10 +1,26 @@
 services:
   - type: web
+<<<<<<< HEAD
     name: tcria-api
     env: docker
+=======
+    name: tcria-mcp-gateway
+    runtime: docker
+>>>>>>> origin/main
     dockerfilePath: ./Dockerfile.mcp
     autoDeploy: true
     healthCheckPath: /health
     envVars:
+<<<<<<< HEAD
       - key: PYTHONUNBUFFERED
         value: "1"
+=======
+      - key: TCRIA_MCP_REQUIRE_AUTH
+        value: true
+      - key: TCRIA_MCP_PUBLIC_URL
+        sync: false
+      - key: TCRIA_MCP_JWT_SECRET
+        sync: false
+      - key: TCRIA_MCP_SIGNING_SECRET
+        sync: false
+>>>>>>> origin/main

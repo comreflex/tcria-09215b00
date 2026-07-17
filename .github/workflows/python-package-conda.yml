@@ -1,0 +1,14 @@
+name: Python Package using Conda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  archived:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Archived workflow notice
+        run: |
+          echo "This legacy Conda workflow is manual-only."
+          echo "Use .github/workflows/main.yml for the maintained CI path."
