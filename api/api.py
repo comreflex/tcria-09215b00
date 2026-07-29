@@ -1,7 +1,15 @@
 from __future__ import annotations
 
-import json
 import os
+<<<<<<< HEAD
+
+from fastapi import FastAPI
+
+from api.routes.audit import create_audit_router
+from api.routes.cases import create_cases_router
+from api.routes.core import router as core_router
+from api.routes.uploads import create_uploads_router
+=======
 import re
 import subprocess
 import sys
@@ -16,15 +24,10 @@ from pydantic import BaseModel, Field
 from generate_unified_governance_report_pdf import generate_governance_pdf
 from tcria.cli import case_init, case_run, investigate, load_manifest, resolve_case_dir
 from tcria.conclusion_engine import build_conclusion_report, render_final_conclusions_md
+>>>>>>> origin/main
 from tcria.engine import TCRIAEngine
-from tcria.institutional_output import render_institutional_markdown
-from tcria.openai_responses import (
-    list_available_institutional_chat_profiles,
-    list_audit_prompt_presets,
-    run_institutional_output_prompt,
-    run_audit_prompt,
-)
 from tcria.settings import load_env
+from tcria.storage import TransientScanStore
 
 # =========================
 # INIT
@@ -33,6 +36,17 @@ from tcria.settings import load_env
 load_env()
 app = FastAPI(title="TCRIA API", version="0.2.0")
 engine = TCRIAEngine()
+<<<<<<< HEAD
+_data_dir = os.getenv("TCRIA_DATA_DIR", "/tmp/tcria_data")
+_retention_minutes = int(os.getenv("TCRIA_RETENTION_MINUTES", "60"))
+_max_upload_mb = int(os.getenv("TCRIA_MAX_UPLOAD_MB", "25"))
+scan_store = TransientScanStore(_data_dir, retention_minutes=_retention_minutes)
+
+app.include_router(core_router)
+app.include_router(create_uploads_router(engine=engine, scan_store=scan_store, max_upload_mb=_max_upload_mb))
+app.include_router(create_audit_router(engine=engine))
+app.include_router(create_cases_router())
+=======
 
 # =========================
 # MODELS
@@ -148,3 +162,4 @@ def generate_pdf(payload: dict):
 
     except Exception as exc:
         raise HTTPException(400, str(exc))
+>>>>>>> origin/main

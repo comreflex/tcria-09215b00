@@ -1,4 +1,6 @@
 -e .
+<<<<<<< HEAD
+=======
 typer>=0.12.5
 python-dotenv>=1.0.1
 pydantic>=2.9.0
@@ -7,3 +9,4 @@ PyGithub>=2.3.0
 notion-client>=2.2.1
 dropbox>=11.36.2
 mcp>=1.9.0
+>>>>>>> origin/main

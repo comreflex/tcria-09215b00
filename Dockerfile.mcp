@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+FROM python:3.11-slim
+=======
 FROM python:3.12-slim
+>>>>>>> origin/main
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,6 +10,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+<<<<<<< HEAD
+# Copy packaging metadata first for better layer caching.
+COPY pyproject.toml requirements.txt README.md ./
+COPY tcria ./tcria
+COPY api ./api
+COPY app ./app
+COPY run_governance_pipeline.py ./
+COPY generate_blocked_artifacts_review.py ./
+COPY generate_case_preparation_summary.py ./
+COPY generate_case_timeline.py ./
+COPY generate_unified_governance_report_pdf.py ./
+COPY generate_investigation_report.py ./
+
+RUN pip install --upgrade pip && pip install -e .
+
+EXPOSE 8000
+
+# Default deploy command (FastAPI).
+CMD ["sh", "-c", "uvicorn api.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+=======
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential git \
     && rm -rf /var/lib/apt/lists/*
@@ -18,3 +42,4 @@ RUN pip install --upgrade pip \
 EXPOSE 8000
 
 CMD ["uvicorn", "api.mcp_gateway:app", "--host", "0.0.0.0", "--port", "8000"]
+>>>>>>> origin/main
