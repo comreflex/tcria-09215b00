@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
 
 from tcria.engine import TCRIAEngine
+from tcria.runtime import GovernanceEventType, GovernanceRuntime, GovernanceState
 
 
 def run_cmd(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -116,6 +118,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).expanduser().resolve()
+    runtime = GovernanceRuntime()
+    runtime.emit(
+        GovernanceEventType.INGESTION_STARTED,
+        "Governance pipeline started.",
+        {"strict": bool(args.strict), "skip_audit": bool(args.skip_audit)},
+    )
 
     audit_script = (repo_root / args.audit_script).resolve()
     review_script = (repo_root / args.review_script).resolve()
@@ -131,6 +139,12 @@ def main() -> int:
         audit_json = Path(args.audit_json).expanduser().resolve()
         if not audit_json.exists():
             raise SystemExit(f"Audit JSON not found: {audit_json}")
+        runtime.transition(GovernanceState.CLASSIFIED)
+        runtime.emit(
+            GovernanceEventType.OFFICIAL_AUDIT_LOADED,
+            "Official audit loaded from existing JSON (--skip-audit).",
+            {"audit_json": str(audit_json)},
+        )
         print(f"[pipeline] Official audit skipped. Using: {audit_json}")
     else:
         if not args.paths:
@@ -158,6 +172,12 @@ def main() -> int:
             if not audit_json:
                 raise SystemExit("Could not detect official audit JSON path from legacy command output.")
             audit_md = audit_json.with_suffix(".md")
+            runtime.transition(GovernanceState.CLASSIFIED)
+            runtime.emit(
+                GovernanceEventType.OFFICIAL_AUDIT_COMPLETED,
+                "Official legacy audit completed.",
+                {"audit_json": str(audit_json), "audit_md": str(audit_md)},
+            )
         else:
             engine = TCRIAEngine(repo_root=repo_root)
             stem = args.output_stem or "tcr_gateway_accusation_bundle_audit"
@@ -175,6 +195,12 @@ def main() -> int:
                 raise SystemExit(f"Official modular audit failed: {exc}") from exc
             audit_json = Path(result["artifacts"]["json"]).expanduser().resolve()
             audit_md = Path(result["artifacts"]["markdown"]).expanduser().resolve()
+            runtime.transition(GovernanceState.CLASSIFIED)
+            runtime.emit(
+                GovernanceEventType.OFFICIAL_AUDIT_COMPLETED,
+                "Official modular audit completed.",
+                {"audit_json": str(audit_json), "audit_md": str(audit_md)},
+            )
             print(f"Mode: {'strict-explicit-decision-record' if args.strict else 'default-heuristic'}")
             print(f"JSON report: {audit_json}")
             print(f"Markdown report: {audit_md}")
@@ -195,6 +221,7 @@ def main() -> int:
     review_json_out.parent.mkdir(parents=True, exist_ok=True)
     review_md_out.parent.mkdir(parents=True, exist_ok=True)
 
+    runtime.transition(GovernanceState.UNDER_REVIEW)
     print("[pipeline] Running complementary blocked review...")
     review_cmd = [
         sys.executable,
@@ -207,6 +234,50 @@ def main() -> int:
     ]
     review_cp = run_cmd(review_cmd, cwd=repo_root)
     print(review_cp.stdout, end="")
+    runtime.emit(
+        GovernanceEventType.COMPLEMENTARY_REVIEW_COMPLETED,
+        "Complementary blocked-artifact review completed.",
+        {"review_json": str(review_json_out), "review_md": str(review_md_out)},
+    )
+
+    try:
+        bundle = json.loads(audit_json.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        runtime.emit(
+            GovernanceEventType.TRACEABILITY_FAILED,
+            "Failed to parse official audit JSON.",
+            {"audit_json": str(audit_json), "error": str(exc)},
+        )
+        raise SystemExit(f"Failed to parse official audit JSON: {exc}") from exc
+    policy_result = runtime.evaluate_policies(bundle)
+    runtime.transition(GovernanceState.POLICY_EVALUATED)
+    runtime.emit(
+        GovernanceEventType.POLICY_EVALUATED,
+        "Policy-as-code evaluation completed.",
+        {
+            "allow_promotion": policy_result.allow_promotion,
+            "blocked_records": policy_result.blocked_records,
+            "total_records": policy_result.total_records,
+        },
+    )
+
+    if policy_result.allow_promotion:
+        runtime.transition(GovernanceState.COMPLETED)
+    else:
+        runtime.transition(GovernanceState.PROMOTION_BLOCKED)
+        runtime.emit(
+            GovernanceEventType.PROMOTION_BLOCKED,
+            "Promotion blocked by governance policies.",
+            {
+                "blocked_records": policy_result.blocked_records,
+                "reasons": policy_result.reasons,
+            },
+        )
+
+    runtime_artifacts = runtime.dump_artifacts(
+        out_dir=review_json_out.parent,
+        stem=(audit_json.stem if audit_json is not None else "pipeline"),
+    )
 
     print("[pipeline] Completed")
     print(f"[pipeline] Official audit JSON: {audit_json}")
@@ -214,6 +285,9 @@ def main() -> int:
         print(f"[pipeline] Official audit MD: {audit_md}")
     print(f"[pipeline] Blocked review JSON: {review_json_out}")
     print(f"[pipeline] Blocked review MD: {review_md_out}")
+    print(f"[pipeline] Runtime events JSON: {runtime_artifacts['events_json']}")
+    print(f"[pipeline] Runtime ledger JSON: {runtime_artifacts['ledger_json']}")
+    print(f"[pipeline] Runtime telemetry JSON: {runtime_artifacts['telemetry_json']}")
     print(
         "[pipeline] Guardrails: complementary-only diagnostics; official outcomes are preserved and not promoted by this layer."
     )
