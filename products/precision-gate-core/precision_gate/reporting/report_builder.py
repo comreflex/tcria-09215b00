@@ -65,20 +65,20 @@ class ReportBuilder:
         confidence = report.get("confidence", 0.0)
 
         lines = [
-            f"# Precision Gate Custody Report",
-            f"",
+            "# Precision Gate Custody Report",
+            "",
             f"**Case ID:** {report['case_id']}  ",
             f"**Execution ID:** {report['execution_id']}  ",
             f"**Generated:** {report['generated_at']}  ",
-            f"",
-            f"## Decision",
-            f"",
-            f"| Field | Value |",
-            f"|-------|-------|",
+            "",
+            "## Decision",
+            "",
+            "| Field | Value |",
+            "|-------|-------|",
             f"| Status | `{status}` |",
             f"| Confidence | {confidence:.4f} |",
             f"| Human Review Required | {'**YES**' if human_review else 'No'} |",
-            f"",
+            "",
         ]
 
         if flags:

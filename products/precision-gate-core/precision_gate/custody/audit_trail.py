@@ -50,10 +50,14 @@ class AuditTrail:
 
     @classmethod
     def load(cls, path: str | Path) -> "AuditTrail":
-        """Load a persisted audit trail (read-only verification)."""
+        """Load a persisted audit trail (raw restore — bypasses append() validation).
+
+        Entries are restored directly from the serialized form, preserving their
+        original timestamps. This is intentionally a raw restore; if append()
+        evolves to add validation, loaded entries will not be re-validated.
+        """
         trail = cls()
         with Path(path).open(encoding="utf-8") as f:
             data = json.load(f)
-        for entry in data.get("entries", []):
-            trail._entries.append(entry)
+        trail._entries.extend(data.get("entries", []))
         return trail
