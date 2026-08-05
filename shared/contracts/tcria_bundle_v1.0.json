@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TCRIA Audit Bundle v1.0",
+  "description": "Output schema of TCRIAEngine.run_audit()['bundle']. This is the input contract for the TCRIAAdapter.",
+  "version": "1.0",
+  "type": "object",
+  "required": ["audit_id", "total_files_scanned"],
+  "properties": {
+    "audit_id": {
+      "type": "string",
+      "description": "Unique identifier for this audit run."
+    },
+    "total_files_scanned": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "accusation_set_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "prescriptive_gate_status": {
+      "type": "string",
+      "enum": ["approved", "blocked", "conditional", "returned_for_correction"]
+    },
+    "compliance_gate_status": {
+      "type": "string"
+    },
+    "traceability_gate_status": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id"],
+        "properties": {
+          "artifact_id": {"type": "string"},
+          "sha256": {"type": "string"},
+          "source_path": {"type": "string"},
+          "type": {"type": "string"},
+          "size_bytes": {"type": "integer"}
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "promoted"],
+        "properties": {
+          "decision_id": {"type": "string"},
+          "promoted": {"type": "boolean"},
+          "evidence_refs": {"type": "array"}
+        }
+      }
+    },
+    "signals_for_verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["signal_id"],
+        "properties": {
+          "signal_id": {"type": "string"},
+          "support_level": {"type": "number"},
+          "evidence_refs": {"type": "array"}
+        }
+      }
+    },
+    "governance": {
+      "type": "object"
+    },
+    "logs": {
+      "type": "array"
+    }
+  }
+}

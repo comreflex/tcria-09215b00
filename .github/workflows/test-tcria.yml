@@ -1,0 +1,31 @@
+name: Test — TCRIA Product
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tcria/**"
+      - "api/**"
+      - "app/**"
+      - "tests/test_engine_smoke.py"
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  test-tcria:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Lint (compile check)
+        run: python -m compileall -q tcria
+      - name: Run TCRIA tests
+        run: pytest tests/test_engine_smoke.py -q

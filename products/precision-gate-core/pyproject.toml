@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "precision-gate-core"
+version = "0.1.0"
+description = "Precision Gate — Mobile custody orchestration layer"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+full = ["quinta-ordem-gate"]
+
+[project.scripts]
+precision-gate = "precision_gate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["precision_gate*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

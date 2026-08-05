@@ -1,0 +1,28 @@
+name: Test — Quinta Ordem Gate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "products/quinta-ordem-gate/**"
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  test-quinta-ordem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install quinta-ordem-gate
+        run: pip install -e products/quinta-ordem-gate[dev]
+      - name: Lint (compile check)
+        run: python -m compileall -q products/quinta-ordem-gate/src
+      - name: Run Quinta Ordem tests
+        run: |
+          cd products/quinta-ordem-gate
+          pytest tests/ -q

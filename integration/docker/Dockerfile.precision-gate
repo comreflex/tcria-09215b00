@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install all three products
+COPY products/quinta-ordem-gate /app/products/quinta-ordem-gate
+COPY products/precision-gate-core /app/products/precision-gate-core
+COPY tcria /app/tcria
+COPY api /app/api
+COPY requirements.txt /app/requirements.txt
+COPY pyproject.toml /app/pyproject.toml
+
+RUN pip install --no-cache-dir \
+    -e /app/products/quinta-ordem-gate \
+    -e /app/products/precision-gate-core \
+    -r /app/requirements.txt
+
+EXPOSE 8000
+
+CMD ["uvicorn", "api.api:app", "--host", "0.0.0.0", "--port", "8000"]

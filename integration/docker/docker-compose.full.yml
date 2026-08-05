@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  tcria:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - PRODUCT=tcria
+
+  quinta-ordem:
+    build:
+      context: ../..
+      dockerfile: integration/docker/Dockerfile.precision-gate
+    ports:
+      - "8001:8001"
+    environment:
+      - PRODUCT=quinta-ordem-gate
+    command: ["python", "-m", "quinta_ordem"]
+
+  precision-gate:
+    build:
+      context: ../..
+      dockerfile: integration/docker/Dockerfile.precision-gate
+    ports:
+      - "8002:8002"
+    depends_on:
+      - tcria
+      - quinta-ordem
+    environment:
+      - TCRIA_URL=http://tcria:8000
+      - QUINTA_ORDEM_URL=http://quinta-ordem:8001
