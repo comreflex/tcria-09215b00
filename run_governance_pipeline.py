@@ -7,7 +7,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from tcria.adapters.quinta_ordem_adapter import QuintaOrdemAdapter
 from tcria.engine import TCRIAEngine
+from tcria.reporting.quinta_ordem_markdown import QuintaOrdemMarkdownReporter
 
 
 def run_cmd(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -109,6 +111,16 @@ def parse_args() -> argparse.Namespace:
         "--review-md-out",
         default=None,
         help="Output path for blocked review Markdown.",
+    )
+    parser.add_argument(
+        "--quinta-ordem-json-out",
+        default=None,
+        help="Output path for Quinta Ordem ExecutionContext JSON export.",
+    )
+    parser.add_argument(
+        "--quinta-ordem-md-out",
+        default=None,
+        help="Output path for Quinta Ordem Markdown report (for Precision Gate).",
     )
     return parser.parse_args()
 
@@ -217,6 +229,36 @@ def main() -> int:
     print(
         "[pipeline] Guardrails: complementary-only diagnostics; official outcomes are preserved and not promoted by this layer."
     )
+
+    # -- Quinta Ordem ExecutionContext export (optional) --
+    quinta_json_out: Optional[Path] = None
+    quinta_md_out: Optional[Path] = None
+    if args.quinta_ordem_json_out or args.quinta_ordem_md_out:
+        stem = audit_json.stem
+        quinta_json_out = (
+            Path(args.quinta_ordem_json_out).expanduser().resolve()
+            if args.quinta_ordem_json_out
+            else audit_json.parent / f"{stem}_quinta_ordem_context.json"
+        )
+        quinta_md_out = (
+            Path(args.quinta_ordem_md_out).expanduser().resolve()
+            if args.quinta_ordem_md_out
+            else audit_json.parent / f"{stem}_quinta_ordem_report.md"
+        )
+
+        print("[pipeline] Generating Quinta Ordem ExecutionContext...")
+        adapter = QuintaOrdemAdapter()
+        ctx = adapter.from_bundle_json(audit_json)
+
+        quinta_json_out.parent.mkdir(parents=True, exist_ok=True)
+        quinta_json_out.write_text(ctx.to_json(), encoding="utf-8")
+        print(f"[pipeline] Quinta Ordem JSON: {quinta_json_out}")
+
+        quinta_md_out.parent.mkdir(parents=True, exist_ok=True)
+        reporter = QuintaOrdemMarkdownReporter()
+        quinta_md_out.write_text(reporter.generate(ctx), encoding="utf-8")
+        print(f"[pipeline] Quinta Ordem MD: {quinta_md_out}")
+
     return 0
 
 
