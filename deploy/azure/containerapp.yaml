@@ -1,0 +1,69 @@
+# Azure Container Apps manifest for the TCRIA MCP gateway.
+#
+# Deploy with:
+#   az containerapp create \
+#     --name tcria-mcp-gateway \
+#     --resource-group <rg> \
+#     --environment <container-apps-env> \
+#     --yaml deploy/azure/containerapp.yaml
+#
+# Or update an existing app:
+#   az containerapp update --name tcria-mcp-gateway --resource-group <rg> \
+#     --yaml deploy/azure/containerapp.yaml
+#
+# Replace <ACR_NAME> and <IMAGE_TAG> before applying (the GitHub Actions
+# workflow at .github/workflows/azure-container-apps.yml does this
+# automatically).
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 8000
+      transport: auto
+      allowInsecure: false
+      traffic:
+        - latestRevision: true
+          weight: 100
+    secrets:
+      - name: tcria-mcp-jwt-secret
+      - name: tcria-mcp-signing-secret
+  template:
+    containers:
+      - name: tcria-mcp-gateway
+        image: <ACR_NAME>.azurecr.io/tcria-mcp-gateway:<IMAGE_TAG>
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi
+        env:
+          - name: PORT
+            value: "8000"
+          - name: TCRIA_MCP_REQUIRE_AUTH
+            value: "true"
+          - name: TCRIA_MCP_PUBLIC_URL
+            value: ""
+          - name: TCRIA_MCP_JWT_SECRET
+            secretRef: tcria-mcp-jwt-secret
+          - name: TCRIA_MCP_SIGNING_SECRET
+            secretRef: tcria-mcp-signing-secret
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          - type: Readiness
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+    scale:
+      minReplicas: 1
+      maxReplicas: 5
+      rules:
+        - name: http-scale
+          http:
+            metadata:
+              concurrentRequests: "50"

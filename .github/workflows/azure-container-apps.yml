@@ -1,0 +1,65 @@
+# Build the TCRIA MCP gateway image, push it to Azure Container Registry,
+# and deploy it to Azure Container Apps.
+#
+# Required repository secrets:
+#   AZURE_CLIENT_ID        - Federated identity for azure/login (OIDC)
+#   AZURE_TENANT_ID
+#   AZURE_SUBSCRIPTION_ID
+#   AZURE_ACR_NAME         - e.g. "tcriaacr" (without .azurecr.io)
+#   AZURE_RESOURCE_GROUP   - e.g. "tcria-rg"
+#   AZURE_CONTAINERAPP_NAME- e.g. "tcria-mcp-gateway"
+
+name: Deploy to Azure Container Apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+      - 'tcria/**'
+      - 'mcp_server.py'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'Dockerfile.mcp'
+      - 'deploy/azure/**'
+      - '.github/workflows/azure-container-apps.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        run: |
+          IMAGE_TAG="${GITHUB_SHA::7}"
+          az acr build \
+            --registry "${{ secrets.AZURE_ACR_NAME }}" \
+            --image "tcria-mcp-gateway:${IMAGE_TAG}" \
+            --image "tcria-mcp-gateway:latest" \
+            --file Dockerfile.mcp \
+            .
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ secrets.AZURE_CONTAINERAPP_NAME }}
+          imageToDeploy: ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/tcria-mcp-gateway:${{ env.IMAGE_TAG }}
+          targetPort: 8000
+          ingress: external

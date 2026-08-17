@@ -17,4 +17,6 @@ RUN pip install --upgrade pip \
 
 EXPOSE 8000
 
-CMD ["uvicorn", "api.mcp_gateway:app", "--host", "0.0.0.0", "--port", "8000"]
+# Honor $PORT when provided by the platform (Azure App Service, Container Apps,
+# Cloud Run, Railway, Render, Heroku); fall back to 8000 for local runs and ECS.
+CMD ["/bin/sh", "-c", "uvicorn api.mcp_gateway:app --host 0.0.0.0 --port ${PORT:-8000}"]
