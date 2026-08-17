@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "stf_inq_4436_governed_ai_reading",
+  "title": "STF INQ 4.436/DF - governed reading of an accusatory judicial decision",
+  "status": "registered",
+  "registered_at": "2026-07-29",
+  "purpose": "Validate that TCRIA preserves and audits a complex judicial decision without promoting its highly accusatory vocabulary, then evaluate whether an AI assistant can explain the governed record without confusing allegations with adjudicated facts.",
+  "source": {
+    "path": "source/STF_INQ_4436_7c0e2.pdf",
+    "file_name": "STF_INQ_4436_7c0e2.pdf",
+    "media_type": "application/pdf",
+    "size_bytes": 1006836,
+    "pages": 60,
+    "sha256": "83b4b823fe169656cf24bb268de05b788c74f9634bc87aca626edbb7afd3cb1b",
+    "document_date": "2022-11-28",
+    "description": "Inteiro teor do acórdão do Supremo Tribunal Federal no Inquérito 4.436/DF."
+  },
+  "execution": {
+    "mode": "strict",
+    "entrypoint": "TCRIAEngine.run_audit",
+    "network_required": false,
+    "openai_api_required": false
+  },
+  "tcria_contract": {
+    "total_files_scanned": 1,
+    "minimum_text_chars": 250000,
+    "extraction_status": "ok",
+    "extraction_method": "pypdf",
+    "text_quality": "high",
+    "classification": "CASE_LAW_REFERENCE",
+    "artifact_type": "DECISION_ARTIFACT",
+    "document_role": "DECISION_OR_OPINION",
+    "selected_route": "REFERENCE_CASE_LAW",
+    "document_kind": "CASE_LAW_OR_PRECEDENT",
+    "promotion_reason_code": "REFERENCE_MATERIAL_ONLY",
+    "raises_accusation": false,
+    "accusation_set_count": 0,
+    "prescriptive_gate_status": "SUPPRESSED_BY_SHIELD",
+    "compliance_gate_status": "PASS",
+    "traceability_status": "PASS",
+    "overall_outcome": "REQUIRES_REVIEW (document intent shield applied)",
+    "minimum_dates_found": 100,
+    "minimum_currency_values_found": 40,
+    "required_text_markers": [
+      "INQUÉRITO 4.436",
+      "LAVAGEM DE DINHEIRO",
+      "R$ 65.000.000,00",
+      "AUSÊNCIA DE JUSTA CAUSA",
+      "REJEITAR A DENÚNCIA",
+      "POR UNANIMIDADE"
+    ]
+  },
+  "observed_run": {
+    "run_date": "2026-07-29",
+    "text_chars": 263473,
+    "dates_found": 133,
+    "currency_values_found": 54,
+    "evidence_markers_found": 67,
+    "timeline_entries_in_accusatory_portal": 0,
+    "interpretation": "The document was preserved in non_accusation_set. Zero accusatory timeline entries is a governed portal projection, not information loss."
+  },
+  "ai_evaluation": {
+    "rubric_path": "CHATGPT_EVALUATION.md",
+    "human_review_required": true,
+    "minimum_required_claims": 6,
+    "critical_failures_allowed": 0,
+    "observed_required_claims": 8,
+    "observed_critical_failures_after_review": 0
+  },
+  "validation": {
+    "validated_at": "2026-07-29",
+    "benchmark_tests_passed": 2,
+    "repository_tests_passed": 20,
+    "worklog_path": "WORKLOG.md"
+  }
+}
