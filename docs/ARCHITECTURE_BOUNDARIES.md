@@ -1,6 +1,6 @@
 # TCRIA Architecture Boundaries
 
-This document defines the operational boundary between the governed TCRIA core and external integration layers such as CLI, API, MCP, web UI, automation, and deployment tooling.
+This document defines the operational boundary between the governed TCRIA core and external integration layers such as CLI, API, web UI, automation, and deployment tooling.
 
 The purpose of this boundary is to prevent integration work from contaminating the governed decision pipeline.
 
@@ -46,7 +46,6 @@ Adapter examples include:
 
 - CLI commands;
 - FastAPI endpoints;
-- MCP tools;
 - web interfaces;
 - Azure deployment files;
 - GitHub Actions workflows;
@@ -87,7 +86,7 @@ adapter calls that entry point
 The incorrect path is:
 
 ```text
-copy core logic into API/MCP/CLI
+copy core logic into API/CLI
 ↓
 modify it locally
 ↓
@@ -108,7 +107,7 @@ Adapters must follow these rules:
 6. Do not bypass compliance, prescriptive, or traceability gates.
 7. Do not write examples, curl commands, or integration snippets inside executable Python modules unless they are valid comments or tests.
 8. Do not create new runtime contracts without documenting them.
-9. Do not allow MCP, API, CLI, or web layers to become the source of truth for governance rules.
+9. Do not allow API, CLI, or web layers to become the source of truth for governance rules.
 10. Do not make adapter convenience more important than auditability.
 
 ## 6. Contract discipline
@@ -140,30 +139,16 @@ Either update the target script contract minimally or remove the unsupported ada
 Do not refactor unrelated layers.
 ```
 
-## 7. MCP boundary
+## 7. MCP exclusion from the Audit Plane
 
-MCP is an adapter layer.
+MCP must not connect TCRIA to Quinta Ordem or Quinta Ordem to Precision. Those
+transitions are governed by deterministic handoffs whose authorization, references,
+hashes and failure states can be verified without a model or protocol intermediary.
 
-MCP may expose controlled tools, routes, or workflows, but it must not become a hidden decision layer.
-
-MCP integrations must:
-
-- call documented core contracts;
-- preserve audit trails;
-- return traceable artifacts;
-- avoid undocumented side effects;
-- avoid changing official outcomes;
-- keep examples and test calls outside executable core files.
-
-MCP must not:
-
-- silently rewrite core logic;
-- pull core logic into MCP tool handlers;
-- duplicate official gate behavior;
-- inject third-party model decisions into official audit output;
-- bypass gates;
-- create undocumented execution paths;
-- mix demo commands with production code.
+A future MCP integration may start only after `PRECISION_COMPLETED` and must remain
+external to the Audit Plane. Its sole permitted architectural purpose is to expose a
+completed, immutable Precision result to an external AI that creates a separate
+interpretive product. It cannot modify, replace or invalidate any auditor output.
 
 ## 8. Pull request policy
 
@@ -172,13 +157,13 @@ Changes must be separated by layer.
 Recommended PR categories:
 
 - `fix/core`: correction inside governed pipeline;
-- `fix/adapter`: correction in CLI, API, MCP, UI, or deployment wrapper;
+- `fix/adapter`: correction in CLI, API, UI, or deployment wrapper;
 - `docs/governance`: architecture, boundaries, rules, or contracts;
 - `test/regression`: tests proving a previously broken flow now works.
 
-A PR should not mix core logic changes with MCP/API/UI/deployment changes unless there is an explicit reason.
+A PR should not mix core logic changes with API/UI/deployment changes unless there is an explicit reason.
 
-Any PR that moves logic from `tcria/` into API, MCP, CLI, web, or deployment code must be treated as a governance-risk PR and reviewed before merge.
+Any PR that moves logic from `tcria/` into API, CLI, web, or deployment code must be treated as a governance-risk PR and reviewed before merge.
 
 ## 9. Minimal correction policy
 

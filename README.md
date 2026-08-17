@@ -272,7 +272,9 @@ responsible AI systems
 
 are welcome.
 
-See CONTRIBUTING.md.## Deployment Architecture
+See CONTRIBUTING.md.
+
+## Deployment Architecture
 
 TCRIA supports multiple deployment targets and governance runtime configurations.
 
@@ -280,7 +282,6 @@ The platform is designed to operate as a distributed governance system capable o
 
 - governance-aware AI pipelines
 - audit artifact generation
-- MCP runtime integrations
 - traceability validation
 - compliance enforcement
 - evidence processing workflows
@@ -293,7 +294,6 @@ The platform is designed to operate as a distributed governance system capable o
 |---|---|
 | Web UI | Governance dashboards and visualization |
 | Governance API | Responses API orchestration and governance enforcement |
-| MCP Gateway | Model Context Protocol runtime integration |
 | Audit Runtime | Audit artifact generation and traceability validation |
 | Governance Engine | Policy enforcement and compliance gates |
 
@@ -304,9 +304,6 @@ The platform is designed to operate as a distributed governance system capable o
 | Platform | Purpose |
 |---|---|
 | GitHub Pages | Static web interface |
-| Railway | Governance API runtime and orchestration |
-| Render | Alternative deployment runtime |
-| Docker Compose | Local governance and MCP runtime |
 | Codespaces / Dev Containers | Development environment |
 
 ---
@@ -334,30 +331,6 @@ run_governance_pipeline.py
 
 ---
 
-### MCP Gateway Runtime
-
-TCRIA includes enterprise-oriented MCP integration for controlled AI orchestration.
-
-The MCP layer enables:
-
-- governance-aware model routing
-- controlled context propagation
-- auditable orchestration
-- runtime supervision
-- traceability-aware execution
-
-Main files:
-
-```text
-mcp_server.py
-Dockerfile.mcp
-docker-compose.mcp.yml
-.env.mcp.example
-MCP_OPENAI_SETUP.md
-```
-
----
-
 ## Local Development Execution
 
 ### Clone Repository
@@ -377,7 +350,6 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-cp .env.mcp.example .env.mcp
 ```
 
 Required environment variables typically include:
@@ -411,36 +383,13 @@ uvicorn api.main:app --reload
 
 ---
 
-## MCP Runtime Execution
-
-### Docker Compose
-
-```bash
-docker compose -f docker-compose.mcp.yml up
-```
-
-This runtime may include:
-
-- governance API services
-- MCP gateway services
-- orchestration runtime
-- audit processing services
-
----
-
 ## Deployment Observability
 
 The repository currently includes:
 
 - multi-environment deployment support
 
-- Railway deployment configuration
-
-- Render deployment configuration
-
 - GitHub Pages deployment pipelines
-
-- containerized MCP runtime execution
 
 - automated release artifacts
 
@@ -451,6 +400,21 @@ The repository currently includes:
 - deployment lifecycle traceability
 
 Deployment metadata, release activity, and runtime execution history can be inspected through the repository deployment records and CI/CD workflows.
+
+---
+
+## Audit Plane Integration Boundary
+
+TCRIA does not include an MCP runtime. The internal audit sequence uses deterministic,
+versioned and fail-closed handoffs:
+
+```text
+TCRIA -> Quinta Ordem -> Precision -> PRECISION_COMPLETED
+```
+
+MCP is prohibited between these auditors. A future MCP integration may exist only after
+`PRECISION_COMPLETED`, outside the Audit Plane, to expose an immutable completed result
+to an external AI that produces a separate interpretive artifact.
 
 ---
 
