@@ -11,7 +11,7 @@ Adapters call the core through documented contracts.
 Adapters do not become the core.
 ```
 
-This keeps MCP, API, CLI, web, Azure, and automation layers useful without allowing them to redefine audit logic, gate logic, or official outcomes.
+This keeps API, CLI, web, Azure, and automation layers useful without allowing them to redefine audit logic, gate logic, or official outcomes.
 
 ## 2. Integration flow
 
@@ -47,7 +47,6 @@ unofficial outcome
 |---|---|---:|---:|---:|
 | CLI | Local/manual execution | Yes | No | No |
 | API | HTTP access | Yes | No | No |
-| MCP | Tool orchestration | Yes | No | No |
 | Web UI | Human interface | Yes, through API/contract | No | No |
 | Azure/Deploy | Hosting/runtime | No direct governance role | No | No |
 | GitHub Actions | Validation/CI | No direct governance role | No | No |
@@ -150,25 +149,16 @@ Regression validation:
 Governance notes:
 ```
 
-## 6. MCP-specific contract
+## 6. MCP exclusion from the Audit Plane
 
-MCP tools must be thin orchestration wrappers.
+MCP is not an approved TCRIA runtime adapter and must not mediate the internal
+TCRIA -> Quinta Ordem -> Precision flow. Auditor-to-auditor transitions use
+deterministic, versioned, fail-closed handoff contracts.
 
-MCP may:
-
-- expose a documented operation;
-- validate inputs;
-- call CLI/API/core contract;
-- return traceable artifact references;
-- report failures transparently.
-
-MCP must not:
-
-- decide official outcomes;
-- create hidden alternate audit logic;
-- duplicate gate logic;
-- inject external AI decisions into official output;
-- write files into the core pipeline without a documented contract.
+MCP may be designed later only outside the Audit Plane, after a formally completed
+Precision result, to connect that immutable result to an external AI that produces a
+separate interpretive artifact. That future artifact is not a Precision result and a
+failure in its generation cannot invalidate the completed audit.
 
 ## 7. API-specific contract
 
@@ -194,7 +184,6 @@ Examples:
 - `OPENAI_API_KEY`;
 - Azure credentials;
 - deployment secrets;
-- MCP connector credentials.
 
 Keys must not be required for the official core pipeline unless explicitly approved by governance review.
 
