@@ -1,8 +1,10 @@
-grenagem# TCRIA — AI Governance Platform for Legal Evidence and Auditability
+# TCRIA — Documentary Governance for Evidence and Auditability
 
-TCRIA is a governance-oriented AI platform designed for legal evidence processing, chain-of-custody validation, and auditable document workflows.
+TCRIA is a documentary-governance system designed for evidence processing, chain-of-custody validation, and auditable document workflows. AI may support bounded tasks, but it does not define the system or replace its governance controls.
 
-The platform enables organizations to structure, analyze, audit, and validate complex evidence collections while preserving explicit human accountability over legal conclusions and high-risk decisions.quefazosaasfuncionar
+The system helps organizations structure, analyze, audit, and validate complex evidence collections. It creates more reliable conditions for qualified people to reach well-founded decisions, while preserving accountability for legal conclusions and other high-risk outcomes.
+
+TCRIA does not promise absolute precision, certainty, or a uniquely correct decision. It makes sources, limits, inconsistencies, and decision paths visible so that conclusions can be reviewed and justified.
 
 ---
 
@@ -27,9 +29,9 @@ Instead of replacing legal judgment, TCRIA introduces a controlled governance ru
 
 TCRIA is built around five core governance principles:
 
-## Human Accountability
+## Accountable Decision-Making
 
-No legal or accusatory conclusion should be promoted without explicit human responsibility metadata.
+Legal or accusatory conclusions must remain attributable, reviewable, and subject to the responsibility required by the applicable context. TCRIA supports the decision process; it does not silently assume decision authority.
 
 ## Auditability
 
@@ -253,7 +255,7 @@ improve auditability
 enforce governance boundaries
 preserve accountability
 
-Human review remains mandatory.
+Qualified review is required when the applicable governance rule, risk level, or institutional process calls for it.
 
 License
 
