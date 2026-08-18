@@ -1,0 +1,92 @@
+name: Synthetic Shoe Factory - TCRIA Only
+
+on:
+  push:
+    branches:
+      - "test/shoe-factory-tcria-20260818"
+  workflow_dispatch:
+
+jobs:
+  tcria-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build synthetic shoe-factory document set
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf testdata/shoe_factory output/shoe_factory
+          mkdir -p testdata/shoe_factory output/shoe_factory
+
+          departments=(procurement production quality logistics finance)
+          months=(2026-06 2026-07)
+          types=(daily_log transactions quality_report inventory approvals)
+
+          for dept in "${departments[@]}"; do
+            for month in "${months[@]}"; do
+              for typ in "${types[@]}"; do
+                file="testdata/shoe_factory/${dept}_${month}_${typ}.txt"
+                cat > "$file" <<EOF
+FACTORY EXTERNAL AUDIT TEST
+Department: ${dept}
+Period: ${month}
+Document type: ${typ}
+Case: synthetic_shoe_factory_external_audit
+Prepared for: external auditor
+Purpose: document collection only; do not infer conclusions from this file alone.
+Record ID: ${dept}-${month}-${typ}
+Responsible area: ${dept}
+Status: available for audit
+Notes: This is synthetic test evidence generated for the TCRIA execution test.
+EOF
+              done
+            done
+          done
+
+          test "$(find testdata/shoe_factory -type f | wc -l)" -eq 50
+          echo "Generated 50 synthetic documents."
+
+      - name: Run TCRIA only
+        run: |
+          python run_governance_pipeline.py \
+            --repo-root . \
+            --path testdata/shoe_factory \
+            --strict \
+            --output-dir output/shoe_factory \
+            --output-stem shoe_factory_tcria_audit \
+            --max-files 100
+
+      - name: Inspect raw TCRIA outputs
+        run: |
+          echo "=== OUTPUT FILES ==="
+          find output/shoe_factory -maxdepth 1 -type f -print | sort
+          echo "=== JSON HEAD ==="
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p = Path('output/shoe_factory/shoe_factory_tcria_audit.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          print(json.dumps(data, ensure_ascii=False, indent=2)[:12000])
+          PY
+
+      - name: Upload TCRIA raw outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: shoe-factory-tcria-outputs
+          path: |
+            output/shoe_factory/**
+            testdata/shoe_factory/**
+          if-no-files-found: error
