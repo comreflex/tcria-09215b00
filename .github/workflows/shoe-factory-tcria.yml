@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "test/shoe-factory-tcria-20260818"
+  pull_request:
+    branches:
+      - "main"
   workflow_dispatch:
 
 jobs:
