@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d
 
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -33,6 +33,79 @@ jobs:
       - name: Run tests
         run: |
           pytest -q
+
+      - name: Run synthetic shoe-factory case through TCRIA only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf testdata/shoe_factory output/shoe_factory
+          mkdir -p testdata/shoe_factory output/shoe_factory
+
+          departments=(procurement production quality logistics finance)
+          months=(2026-06 2026-07)
+          types=(daily_log transactions quality_report inventory approvals)
+
+          for dept in "${departments[@]}"; do
+            for month in "${months[@]}"; do
+              for typ in "${types[@]}"; do
+                file="testdata/shoe_factory/${dept}_${month}_${typ}.txt"
+                cat > "$file" <<EOF
+FACTORY EXTERNAL AUDIT TEST
+Department: ${dept}
+Period: ${month}
+Document type: ${typ}
+Case: synthetic_shoe_factory_external_audit
+Prepared for: external auditor
+Purpose: document collection only; do not infer conclusions from this file alone.
+Record ID: ${dept}-${month}-${typ}
+Responsible area: ${dept}
+Status: available for audit
+Notes: synthetic evidence for TCRIA execution testing only.
+EOF
+              done
+            done
+          done
+
+          test "$(find testdata/shoe_factory -type f | wc -l)" -eq 50
+
+          python run_governance_pipeline.py \
+            --repo-root . \
+            --path testdata/shoe_factory \
+            --strict \
+            --output-dir output/shoe_factory \
+            --output-stem shoe_factory_tcria_audit \
+            --max-files 100
+
+          echo "=== TCRIA OUTPUTS ==="
+          find output/shoe_factory -maxdepth 1 -type f -print | sort
+          echo "=== TCRIA JSON SUMMARY ==="
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          candidates = sorted(Path('output/shoe_factory').glob('shoe_factory_tcria_audit*.json'))
+          print('JSON files:', [str(p) for p in candidates])
+          for p in candidates:
+              data = json.loads(p.read_text(encoding='utf-8'))
+              print(f'--- {p.name} ---')
+              if isinstance(data, dict):
+                  print('top-level keys:', sorted(data.keys()))
+                  bundle = data.get('bundle')
+                  if isinstance(bundle, dict):
+                      print('total_files_scanned:', bundle.get('total_files_scanned'))
+                      print('accusation_set_count:', bundle.get('accusation_set_count'))
+                  print('status:', data.get('status'))
+              else:
+                  print('JSON type:', type(data).__name__)
+          PY
+
+      - name: Upload TCRIA factory outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: shoe-factory-tcria-outputs
+          path: |
+            output/shoe_factory/**
+            testdata/shoe_factory/**
+          if-no-files-found: error
 
       - name: Validate MCP server and gateway imports
         run: |
