@@ -7,7 +7,11 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from tcria.adapters.quinta_ordem_adapter import QuintaOrdemAdapter
+from tcria.consolidation.final_consolidator import FinalConsolidator
 from tcria.engine import TCRIAEngine
+from tcria.reporting.final_report_markdown import FinalReportMarkdownReporter
+from tcria.reporting.quinta_ordem_markdown import QuintaOrdemMarkdownReporter
 
 
 def run_cmd(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -109,6 +113,26 @@ def parse_args() -> argparse.Namespace:
         "--review-md-out",
         default=None,
         help="Output path for blocked review Markdown.",
+    )
+    parser.add_argument(
+        "--quinta-ordem-json-out",
+        default=None,
+        help="Output path for Quinta Ordem ExecutionContext JSON export.",
+    )
+    parser.add_argument(
+        "--quinta-ordem-md-out",
+        default=None,
+        help="Output path for Quinta Ordem Markdown report (for Precision Gate).",
+    )
+    parser.add_argument(
+        "--precision-gate-output",
+        default=None,
+        help="Path to the Precision Gate output JSON (stage 3 input for final consolidation).",
+    )
+    parser.add_argument(
+        "--final-report-md-out",
+        default=None,
+        help="Output path for the final consolidated Markdown report (reads all three stage outputs).",
     )
     return parser.parse_args()
 
@@ -217,6 +241,79 @@ def main() -> int:
     print(
         "[pipeline] Guardrails: complementary-only diagnostics; official outcomes are preserved and not promoted by this layer."
     )
+
+    # -- Quinta Ordem ExecutionContext export (optional) --
+    quinta_json_out: Optional[Path] = None
+    quinta_md_out: Optional[Path] = None
+    if args.quinta_ordem_json_out or args.quinta_ordem_md_out:
+        stem = audit_json.stem
+        quinta_json_out = (
+            Path(args.quinta_ordem_json_out).expanduser().resolve()
+            if args.quinta_ordem_json_out
+            else audit_json.parent / f"{stem}_quinta_ordem_context.json"
+        )
+        quinta_md_out = (
+            Path(args.quinta_ordem_md_out).expanduser().resolve()
+            if args.quinta_ordem_md_out
+            else audit_json.parent / f"{stem}_quinta_ordem_report.md"
+        )
+
+        print("[pipeline] Generating Quinta Ordem ExecutionContext...")
+        adapter = QuintaOrdemAdapter()
+        ctx = adapter.from_bundle_json(audit_json)
+
+        quinta_json_out.parent.mkdir(parents=True, exist_ok=True)
+        quinta_json_out.write_text(ctx.to_json(), encoding="utf-8")
+        print(f"[pipeline] Quinta Ordem JSON: {quinta_json_out}")
+
+        quinta_md_out.parent.mkdir(parents=True, exist_ok=True)
+        reporter = QuintaOrdemMarkdownReporter()
+        quinta_md_out.write_text(reporter.generate(ctx), encoding="utf-8")
+        print(f"[pipeline] Quinta Ordem MD: {quinta_md_out}")
+
+    # -- Final consolidated report (optional, reads all three stage outputs) --
+    if args.final_report_md_out:
+        stem = audit_json.stem
+        final_md_out = Path(args.final_report_md_out).expanduser().resolve()
+
+        # Stage 2: ensure Quinta Ordem JSON is available
+        if quinta_json_out and quinta_json_out.exists():
+            s2_path: Path = quinta_json_out
+        else:
+            # Generate on-the-fly if not already produced
+            s2_path = audit_json.parent / f"{stem}_quinta_ordem_context.json"
+            if not s2_path.exists():
+                print("[pipeline] Generating Quinta Ordem context for final consolidation...")
+                adapter = QuintaOrdemAdapter()
+                ctx = adapter.from_bundle_json(audit_json)
+                s2_path.parent.mkdir(parents=True, exist_ok=True)
+                s2_path.write_text(ctx.to_json(), encoding="utf-8")
+
+        # Stage 3: Precision Gate output (optional path)
+        s3: dict | Path = {}
+        if args.precision_gate_output:
+            s3 = Path(args.precision_gate_output).expanduser().resolve()
+            if not s3.exists():
+                print(f"[pipeline] Warning: Precision Gate output not found at {s3}; stage 3 will be empty.")
+                s3 = {}
+
+        print("[pipeline] Running final consolidation across all three stages...")
+        consolidator = FinalConsolidator()
+        final_result = consolidator.consolidate(
+            stage1=audit_json,
+            stage2=s2_path,
+            stage3=s3,
+        )
+
+        final_md_out.parent.mkdir(parents=True, exist_ok=True)
+        final_reporter = FinalReportMarkdownReporter()
+        final_md_out.write_text(final_reporter.generate(final_result), encoding="utf-8")
+        print(f"[pipeline] Final consolidated MD: {final_md_out}")
+        print(f"[pipeline] Overall status: {final_result.overall_status}")
+        print(f"[pipeline] Overall confidence: {final_result.overall_confidence}%")
+        print(f"[pipeline] Contradictions detected: {len(final_result.contradicted)}")
+        print(f"[pipeline] Open points: {len(final_result.open_points)}")
+
     return 0
 
 
