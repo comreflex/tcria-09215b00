@@ -358,23 +358,24 @@ O valor da composição reside precisamente nessa complementaridade.
 
 A arquitetura integra técnicas relacionadas a diferentes dimensões da auditabilidade.
 
-Dimensão	TCRIA	Quinta Ordem	Precision
-Proveniência	✓	observa	preserva
-Integridade do Artefato	✓	verifica	preserva
-Hash / Identificação	✓	utiliza	preserva
-Cadeia de Custódia	✓	continua	acompanha
-Rastreabilidade	✓	verifica	consolida
-Governança	✓	respeita	respeita
-Evidência e Suporte	organiza	verifica	controla promoção
-Integridade Estrutural	prepara	verifica	observa
-Consistência Lógica	registra contexto	verifica	preserva divergência
-Pontos Não Resolvidos	registra	avalia	mantém estado
-Null / Ausência de Conclusão	produz	analisa	preserva
-Incerteza	registra	avalia	classifica
-Controle de Promoção	inicia	verifica	reforça
-Revisão Humana	sinaliza	pode exigir	preserva
-Audit Trail	produz	acrescenta	consolida
-Outputs Próprios	✓	✓	✓
+| Dimensão | TCRIA | Quinta Ordem | Precision |
+| --- | --- | --- | --- |
+| Proveniência | ✓ | observa | preserva |
+| Integridade do Artefato | ✓ | verifica | preserva |
+| Hash / Identificação | ✓ | utiliza | preserva |
+| Cadeia de Custódia | ✓ | continua | acompanha |
+| Rastreabilidade | ✓ | verifica | consolida |
+| Governança | ✓ | respeita | respeita |
+| Evidência e Suporte | organiza | verifica | controla promoção |
+| Integridade Estrutural | prepara | verifica | observa |
+| Consistência Lógica | registra contexto | verifica | preserva divergência |
+| Pontos Não Resolvidos | registra | avalia | mantém estado |
+| Null / Ausência de Conclusão | produz | analisa | preserva |
+| Incerteza | registra | avalia | classifica |
+| Controle de Promoção | inicia | verifica | reforça |
+| Revisão Humana | sinaliza | pode exigir | preserva |
+| Audit Trail | produz | acrescenta | consolida |
+| Outputs Próprios | ✓ | ✓ | ✓ |
 
 A cobertura não implica que todos os módulos desempenhem a mesma função.
 
