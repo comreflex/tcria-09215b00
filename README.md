@@ -715,13 +715,8 @@ TCRIA → Quinta Ordem → Precision
 
                 A integração de técnicas complementares de governança da evidência, veri cação estrutural e
                 controle do estado da informação, mantendo integralmente a trilha anterior, permite a
-```
-
-fi fi fi fl fi fi fi
-
-```
- composição TCRIA → Quinta Ordem → Precision gerar uma auditoria mais abrangente e
- rastreável do que qualquer módulo isoladamente.
+                composição TCRIA → Quinta Ordem → Precision gerar uma auditoria mais abrangente e
+                rastreável do que qualquer módulo isoladamente.
 
  Essa hipótese é passível de teste.
 
