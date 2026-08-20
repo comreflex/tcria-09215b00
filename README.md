@@ -713,12 +713,7 @@ TCRIA → Quinta Ordem → Precision
 ```
                 A hipótese principal da integração é:
 
-                A integração de técnicas complementares de governança da evidência, veri cação estrutural e
-                controle do estado da informação, mantendo integralmente a trilha anterior, permite a
-```
-
-fi fi fi fl fi fi fi
-
+                A integração de técnicas complementares de governança da evidência, veri cação estrutural  controle do estado da informação, mantendo integralmente a trilha anterior, permite a
 ```
  composição TCRIA → Quinta Ordem → Precision gerar uma auditoria mais abrangente e
  rastreável do que qualquer módulo isoladamente.
@@ -780,7 +775,7 @@ Status
  auditores.
 ```
 
-fl fl fi fi
+
 
 Os módulos permanecem independentes.
 
