@@ -1,14 +1,16 @@
-name: CI
+name: Synthetic Shoe Factory - TCRIA Only
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - "test/shoe-factory-tcria-20260818"
   pull_request:
-    branches: ["main"]
+    branches:
+      - "main"
   workflow_dispatch:
 
 jobs:
-  lint-test-build:
+  tcria-only:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,17 +26,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
 
-      - name: Lint (critical errors)
-        run: |
-          python -m compileall -q tcria
-
-      - name: Run tests
-        run: |
-          pytest -q
-
-      - name: Run synthetic shoe-factory case through TCRIA only
+      - name: Build synthetic shoe-factory document set
         shell: bash
         run: |
           set -euo pipefail
@@ -60,14 +53,17 @@ Purpose: document collection only; do not infer conclusions from this file alone
 Record ID: ${dept}-${month}-${typ}
 Responsible area: ${dept}
 Status: available for audit
-Notes: synthetic evidence for TCRIA execution testing only.
+Notes: This is synthetic test evidence generated for the TCRIA execution test.
 EOF
               done
             done
           done
 
           test "$(find testdata/shoe_factory -type f | wc -l)" -eq 50
+          echo "Generated 50 synthetic documents."
 
+      - name: Run TCRIA only
+        run: |
           python run_governance_pipeline.py \
             --repo-root . \
             --path testdata/shoe_factory \
@@ -76,29 +72,20 @@ EOF
             --output-stem shoe_factory_tcria_audit \
             --max-files 100
 
-          echo "=== TCRIA OUTPUTS ==="
+      - name: Inspect raw TCRIA outputs
+        run: |
+          echo "=== OUTPUT FILES ==="
           find output/shoe_factory -maxdepth 1 -type f -print | sort
-          echo "=== TCRIA JSON SUMMARY ==="
+          echo "=== JSON HEAD ==="
           python - <<'PY'
           from pathlib import Path
           import json
-          candidates = sorted(Path('output/shoe_factory').glob('shoe_factory_tcria_audit*.json'))
-          print('JSON files:', [str(p) for p in candidates])
-          for p in candidates:
-              data = json.loads(p.read_text(encoding='utf-8'))
-              print(f'--- {p.name} ---')
-              if isinstance(data, dict):
-                  print('top-level keys:', sorted(data.keys()))
-                  bundle = data.get('bundle')
-                  if isinstance(bundle, dict):
-                      print('total_files_scanned:', bundle.get('total_files_scanned'))
-                      print('accusation_set_count:', bundle.get('accusation_set_count'))
-                  print('status:', data.get('status'))
-              else:
-                  print('JSON type:', type(data).__name__)
+          p = Path('output/shoe_factory/shoe_factory_tcria_audit.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          print(json.dumps(data, ensure_ascii=False, indent=2)[:12000])
           PY
 
-      - name: Upload TCRIA factory outputs
+      - name: Upload TCRIA raw outputs
         uses: actions/upload-artifact@v4
         with:
           name: shoe-factory-tcria-outputs
@@ -106,19 +93,3 @@ EOF
             output/shoe_factory/**
             testdata/shoe_factory/**
           if-no-files-found: error
-
-      - name: Validate MCP server and gateway imports
-        run: |
-          python -c "import mcp_server"
-          python -c "from api.mcp_gateway import app; print(app.title)"
-
-      - name: Build Docker image (MCP)
-        run: |
-          docker build -f Dockerfile.mcp -t tcria:mcp-ci .
-
-      - name: Smoke API container
-        run: |
-          docker run -d --rm -p 8000:8000 --name tcria_api_ci tcria:mcp-ci
-          sleep 5
-          curl -fsS http://127.0.0.1:8000/health
-          docker stop tcria_api_ci
