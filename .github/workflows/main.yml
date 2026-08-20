@@ -101,7 +101,7 @@ EOF
       - name: Upload TCRIA factory outputs
         uses: actions/upload-artifact@v4
         with:
-          name: shoe-factory-tcria-outputs
+          name: shoe-factory-tcria-outputs-main
           path: |
             output/shoe_factory/**
             testdata/shoe_factory/**
