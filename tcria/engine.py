@@ -14,7 +14,7 @@ from tcria.governance import (
     evaluate_traceability_check,
 )
 from tcria.ingestion import load_documents
-from tcria.models import AuditRecord
+from tcria.models import AuditRecord, Document
 from tcria.signals import detect_signals
 
 
@@ -34,20 +34,22 @@ class TCRIAEngine:
         include_pdf: bool = True,
         max_files: int | None = None,
         max_total_bytes: int | None = None,
+        preloaded_documents: list[Document] | None = None,
     ) -> dict[str, object]:
         paths = input_paths[:] if input_paths else ([input_path] if input_path else [])
         if not paths:
             raise ValueError("At least one input path is required.")
 
-        documents = []
-        for path_value in paths:
-            documents.extend(
-                load_documents(
-                    path_value,
-                    max_files=max_files,
-                    max_total_bytes=max_total_bytes,
+        documents = list(preloaded_documents) if preloaded_documents is not None else []
+        if preloaded_documents is None:
+            for path_value in paths:
+                documents.extend(
+                    load_documents(
+                        path_value,
+                        max_files=max_files,
+                        max_total_bytes=max_total_bytes,
+                    )
                 )
-            )
         records: list[AuditRecord] = []
 
         for doc in documents:
@@ -167,7 +169,13 @@ class TCRIAEngine:
         if max_total_bytes is not None:
             cmd.extend(["--max-total-bytes", str(max_total_bytes)])
 
-        cp = subprocess.run(cmd, text=True, capture_output=True, cwd=str(self.repo_root))
+        cp = subprocess.run(
+            cmd,
+            text=True,
+            capture_output=True,
+            cwd=str(self.repo_root),
+            check=False,
+        )
         if cp.returncode != 0:
             raise RuntimeError(f"Official pipeline failed ({cp.returncode}): {cp.stderr or cp.stdout}")
 

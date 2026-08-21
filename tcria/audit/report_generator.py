@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+from io import BytesIO
 from pathlib import Path
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+
 from tcria.institutional_output import render_institutional_markdown
 
 
@@ -45,8 +49,9 @@ def render_markdown_report(bundle: dict[str, object]) -> str:
 
 def _write_pdf_from_markdown(markdown: str, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    c = canvas.Canvas(str(output_path), pagesize=A4)
-    width, height = A4
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    _, height = A4
     y = height - 40
     for raw_line in markdown.splitlines():
         line = raw_line[:110]
@@ -56,6 +61,24 @@ def _write_pdf_from_markdown(markdown: str, output_path: Path) -> None:
             c.showPage()
             y = height - 40
     c.save()
+    _atomic_write_bytes(output_path, buffer.getvalue())
+
+
+def _atomic_write_bytes(path: Path, payload: bytes) -> None:
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _atomic_write_text(path: Path, payload: str) -> None:
+    _atomic_write_bytes(path, payload.encode("utf-8"))
 
 
 def write_audit_artifacts(
@@ -74,14 +97,14 @@ def write_audit_artifacts(
     institutional_md_path = out_path / f"{output_stem}_institutional.md"
 
     markdown = render_markdown_report(bundle)
-    json_path.write_text(json.dumps(bundle, ensure_ascii=False, indent=2), encoding="utf-8")
-    md_path.write_text(markdown, encoding="utf-8")
+    _atomic_write_text(json_path, json.dumps(bundle, ensure_ascii=False, indent=2))
+    _atomic_write_text(md_path, markdown)
     artifacts = {"json": str(json_path), "markdown": str(md_path)}
 
     if institutional_output is not None:
-        institutional_md_path.write_text(
+        _atomic_write_text(
+            institutional_md_path,
             render_institutional_markdown(institutional_output),
-            encoding="utf-8",
         )
         artifacts["institutional_markdown"] = str(institutional_md_path)
 

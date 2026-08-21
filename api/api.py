@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import re
@@ -9,7 +10,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -70,6 +71,19 @@ def _resolve_and_validate_input_path(path_value: str) -> Path:
 def _resolve_case_path(case_value: str, root: str) -> Path:
     return resolve_case_dir(case_value, root)
 
+
+def _require_native_operator(authorization: str | None) -> None:
+    expected = os.getenv("TCRIA_API_TOKEN", "")
+    if len(expected.encode()) < 32:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "TCRIA_API_TOKEN must be configured with at least 32 bytes.",
+        )
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Bearer token required.")
+    if not hmac.compare_digest(authorization.split(" ", 1)[1], expected):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid operator token.")
+
 # =========================
 # HEALTH
 # =========================
@@ -83,7 +97,11 @@ def health():
 # =========================
 
 @app.post("/audit")
-def run_audit(payload: AuditRequest):
+def run_audit(
+    payload: AuditRequest,
+    authorization: str | None = Header(default=None),
+):
+    _require_native_operator(authorization)
     try:
         path = _resolve_and_validate_input_path(payload.path)
         return engine.run_audit(
@@ -100,7 +118,11 @@ def run_audit(payload: AuditRequest):
 # =========================
 
 @app.post("/investigations/full-run")
-def full_run(payload: FullInvestigationRunRequest):
+def full_run(
+    payload: FullInvestigationRunRequest,
+    authorization: str | None = Header(default=None),
+):
+    _require_native_operator(authorization)
     try:
         case_dir = _resolve_case_path(payload.case, payload.root)
 
@@ -131,7 +153,11 @@ def full_run(payload: FullInvestigationRunRequest):
 # =========================
 
 @app.post("/audit/report/pdf")
-def generate_pdf(payload: dict):
+def generate_pdf(
+    payload: dict,
+    authorization: str | None = Header(default=None),
+):
+    _require_native_operator(authorization)
     try:
         pdf_bytes = generate_governance_pdf(
             audit=payload.get("audit", {}),
